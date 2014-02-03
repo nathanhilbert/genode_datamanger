@@ -25,6 +25,7 @@ from django.conf import settings
 from django.template import RequestContext
 from django.contrib.auth.models import User
 from django.core.cache import cache
+from django.contrib.auth.decorators import login_required
 
 from geonode.maps.views import default_map_config
 from geonode.maps.models import Layer
@@ -37,6 +38,7 @@ from geonode.search.normalizers import apply_normalizers
 from geonode.search.query import query_from_request
 from geonode.search.query import BadQuery
 from geonode.base.models import TopicCategory
+from geonode.datamanager.forms import DataConnectionForm
 
 from datetime import datetime
 from time import time
@@ -53,12 +55,78 @@ _extra_context = resolve_extension('extra_context')
 DEFAULT_MAPS_SEARCH_BATCH_SIZE = 10
 
 
-
+@login_required
 def datamanager(request, template='search/search.html', **kw):
     initial_query = request.REQUEST.get('q','')
     tags = {}
 
     return render_to_response(template, RequestContext(request, {}))
+
+@login_required
+def dataconnection_create(request, template='datamanager/dataconnection_create.html'):
+
+
+    if request.method == "POST":
+        dataconnection_form = DataConnectionForm(request.POST)
+    else:
+        dataconnection_form = DataConnectionForm()
+
+    # if request.method == "POST" and layer_form.is_valid() and attribute_form.is_valid():
+    #     new_poc = layer_form.cleaned_data['poc']
+    #     new_author = layer_form.cleaned_data['metadata_author']
+    #     new_keywords = layer_form.cleaned_data['keywords']
+
+    #     if new_poc is None:
+    #         if poc.user is None:
+    #             poc_form = ProfileForm(request.POST, prefix="poc", instance=poc)
+    #         else:
+    #             poc_form = ProfileForm(request.POST, prefix="poc")
+    #         if poc_form.has_changed and poc_form.is_valid():
+    #             new_poc = poc_form.save()
+
+    #     if new_author is None:
+    #         if metadata_author.user is None:
+    #             author_form = ProfileForm(request.POST, prefix="author", 
+    #                 instance=metadata_author)
+    #         else:
+    #             author_form = ProfileForm(request.POST, prefix="author")
+    #         if author_form.has_changed and author_form.is_valid():
+    #             new_author = author_form.save()
+
+    #     for form in attribute_form.cleaned_data:
+    #         la = Attribute.objects.get(id=int(form['id'].id))
+    #         la.description = form["description"]
+    #         la.attribute_label = form["attribute_label"]
+    #         la.visible = form["visible"]
+    #         la.display_order = form["display_order"]
+    #         la.save()
+
+    #     if new_poc is not None and new_author is not None:
+    #         the_layer = layer_form.save()
+    #         the_layer.poc = new_poc
+    #         the_layer.metadata_author = new_author
+    #         the_layer.keywords.clear()
+    #         the_layer.keywords.add(*new_keywords)
+    #         return HttpResponseRedirect(reverse('layer_detail', args=(layer.typename,)))
+
+    # if poc.user is None:
+    #     poc_form = ProfileForm(instance=poc, prefix="poc")
+    # else:
+    #     layer_form.fields['poc'].initial = poc.id
+    #     poc_form = ProfileForm(prefix="poc")
+    #     poc_form.hidden=True
+
+    # if metadata_author.user is None:
+    #     author_form = ProfileForm(instance=metadata_author, prefix="author")
+    # else:
+    #     layer_form.fields['metadata_author'].initial = metadata_author.id
+    #     author_form = ProfileForm(prefix="author")
+    #     author_form.hidden=True
+
+    return render_to_response(template, RequestContext(request, {
+        "dataconnection_form": dataconnection_form,
+    }))
+
 
 
 

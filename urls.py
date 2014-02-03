@@ -5,6 +5,7 @@ from django.conf.urls.defaults import *
 
 urlpatterns = patterns('geonode.datamanager.views',
     url(r'^$', 'datamanager', name='datamanager'),
+    url(r'^createconnection$', 'dataconnection_create', name='dataconnection_create'),
     #url(r'^html$', 'search_page', {'template': 'search/search_content.html'}, name='search_content'),
     #url(r'^api$', 'search_api', name='search_api'),
     #url(r'^api/data$', 'search_api', kwargs={'type':'layer'}, name='layer_search_api'),
