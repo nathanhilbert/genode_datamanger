@@ -58,10 +58,10 @@ class DataConnection(models.Model, PermissionLevelMixin):
 
     # section 1
     title = models.CharField(_('title'), max_length=255, help_text=_('name by which the cited resource is known'))
-    creation_date = models.DateTimeField(_('date'), default = datetime.now, help_text=_('reference date for the cited resource')) # passing the method itself, not the result
-    lastedit_date = models.DateTimeField(_('date'), default = datetime.now, help_text=_('Last time this was edited')) 
-    collection_date_start = models.DateTimeField(_('date'), default = datetime.now, help_text=_('Date of collection')) 
-    collection_date_end = models.DateTimeField(_('date'), default = datetime.now, help_text=_('Date of collection end')) 
+    creation_date = models.DateField(_('date'), default = datetime.now, help_text=_('reference date for the cited resource')) # passing the method itself, not the result
+    lastedit_date = models.DateField(_('date'), default = datetime.now, help_text=_('Last time this was edited')) 
+    collection_date_start = models.DateField(_('date'), default = datetime.now, help_text=_('Date of collection')) 
+    collection_date_end = models.DateField(_('date'), default = datetime.now, help_text=_('Date of collection end')) 
 
 
     abstract = models.TextField(_('abstract'), blank=True, help_text=_('brief narrative summary of the content of the resource(s)'))

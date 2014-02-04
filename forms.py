@@ -32,8 +32,8 @@ from geonode.people.models import Profile
 
 class DataConnectionForm(forms.ModelForm):
 
-    collection_date_start = forms.CharField(widget=forms.TextInput(attrs={'class':'datepicker'}))
-    collection_date_end = forms.CharField(widget=forms.TextInput(attrs={'class':'datepicker'}))
+    collection_date_start = forms.DateField(widget=forms.TextInput(attrs={'class':'datepicker'}), input_formats=("%m/%d/%Y",))
+    collection_date_end = forms.DateField(widget=forms.TextInput(attrs={'class':'datepicker'}), input_formats=("%m/%d/%Y",))
 
     keywords = taggit.forms.TagField(required=False,
                                      help_text=_("A space or comma-separated list of keywords"))
