@@ -27,6 +27,7 @@ from django.template import RequestContext
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.contrib.auth.decorators import login_required
+from django.forms.util import ErrorList
 
 from geonode.maps.views import default_map_config
 from geonode.maps.models import Layer
@@ -39,7 +40,9 @@ from geonode.search.normalizers import apply_normalizers
 from geonode.search.query import query_from_request
 from geonode.search.query import BadQuery
 from geonode.base.models import TopicCategory
-from geonode.datamanager.forms import DataConnectionForm
+from geonode.datamanager.forms import DataConnectionCreateForm, DataConnectionEditForm
+from geonode.datamanager.models import DataConnection
+from geonode.datamanager.utils import testFormhubConnection
 
 from datetime import datetime
 from time import time
@@ -57,26 +60,35 @@ DEFAULT_MAPS_SEARCH_BATCH_SIZE = 10
 
 
 @login_required
-def datamanager(request, template='datamanger/datamanager.html', **kw):
+def datamanager(request, template='datamanager/datamanager.html', **kw):
     initial_query = request.REQUEST.get('q','')
-    tags = {}
+    dataconnection_objs = DataConnection.objects.all()
 
-    return render_to_response(template, RequestContext(request, {}))
+
+    return render_to_response(template, RequestContext(request, {"object_list":dataconnection_objs}))
 
 @login_required
 def dataconnection_create(request, template='datamanager/dataconnection_create.html'):
 
 
     if request.method == "POST":
-        dataconnection_form = DataConnectionForm(request.POST)
+        dataconnection_form = DataConnectionCreateForm(request.POST)
 
     else:
-        dataconnection_form = DataConnectionForm()
+        dataconnection_form = DataConnectionCreateForm()
     print dataconnection_form
     if request.method == "POST" and dataconnection_form.is_valid():
-        dataconnection_form.save()
-        #redirect
-        return HttpResponseRedirect(reverse('datamanager'))#, args=(layer.typename,)))
+        validformcon, msg = testFormhubConnection(dataconnection_form.cleaned_data['formhub_url'], 
+                                    dataconnection_form.cleaned_data['formhub_username'],
+                                    dataconnection_form.cleaned_data['formhub_password'])
+        if not validformcon:
+            errors = dataconnection_form._errors.setdefault("formhub_url", ErrorList())
+            errors.append(msg)
+        else:
+            dataconnection = dataconnection_form.save()
+            #redirect
+            #return HttpResponseRedirect(reverse('/datamanager/' + str(dataconnection.id) + '/edit'))#, args=(layer.typename,)))
+            return HttpResponseRedirect(reverse('dataconnection_edit', args=(dataconnection.id,)))
 
 
 
@@ -89,6 +101,53 @@ def dataconnection_create(request, template='datamanager/dataconnection_create.h
     return render_to_response(template, RequestContext(request, {
         "dataconnection_form": dataconnection_form,
     }))
+
+
+@login_required
+def dataconnection_edit(request, id, template='datamanager/dataconnection_create.html'):
+
+    #double check dataconnection
+    dataconnection = DataConnection.objects.get(id=int(id))
+
+
+    if request.method == "POST":
+        dataconnection_form = DataConnectionEditForm(request.POST, instance=dataconnection, dataconnection=dataconnection)
+
+    else:
+        dataconnection_form = DataConnectionEditForm(instance=dataconnection, dataconnection=dataconnection)
+
+    if request.method == "POST" and dataconnection_form.is_valid():
+        print "saving now"
+        dataconnection = dataconnection_form.save()
+        print dataconnection.formhub_url
+        print "refreshing now"
+        dataconnection.refresh()
+        #redirect to layer
+        return HttpResponseRedirect(reverse('datamanager'))#, args=(layer.typename,)))
+
+
+
+    # if request.method == "POST" and layer_form.is_valid():
+    #     new_poc = layer_form.cleaned_data['poc']
+    #     new_author = layer_form.cleaned_data['metadata_author']
+    #     new_keywords = layer_form.cleaned_data['keywords']
+
+
+    return render_to_response(template, RequestContext(request, {
+        "dataconnection": dataconnection,
+        "dataconnection_form": dataconnection_form,
+    }))
+
+@login_required
+def dataconnection_refresh(request, id, template='datamanager/dataconnection_create.html'):
+    dataconnection = DataConnection.objects.get(id=int(id))
+    dataconnection.refresh()
+    return HttpResponseRedirect(reverse('dataconnection_details', args=(dataconnection.id,)))
+
+
+@login_required
+def dataconnection_details(request, id, template='datamanager/dataconnection_details.html'):
+    return render_to_response(template, RequestContext(request, {}))
 
 
 

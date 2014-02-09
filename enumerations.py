@@ -23,3 +23,10 @@ DATACONNECTION_TYPES = [
     'TAMIS',
     'Excel',
 ]
+
+DATAUPDATE_FREQ = (
+    ("0", "Never",),
+    ("84600", 'Daily',),
+    ("604800", 'Weekly',),
+    ("18748800", 'Monthly',),
+)

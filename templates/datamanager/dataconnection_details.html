@@ -1,0 +1,22 @@
+{% extends "site_base.html" %}
+{% load i18n %}
+{% load bootstrap_tags %}
+
+{% block title %}Title goes here{% endblock %}
+
+{% block body_class %}datamanager{% endblock %}
+
+{% block body_outer %}  
+
+
+<div class="datacon_content">
+  {% include "datamanager/_dataconnection_list_item.html" %}
+  {% include "datamanager/_dataconnection_contentheader.html" %}
+</div>
+
+{% endblock %}
+{% block extra_script %}
+ <link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
+  <script src="//code.jquery.com/jquery-1.9.1.js"></script>
+  <script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+{% endblock %}

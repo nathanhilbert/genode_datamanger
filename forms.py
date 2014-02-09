@@ -28,15 +28,37 @@ from django.utils.translation import ugettext_lazy as _
 
 from geonode.datamanager.models import DataConnection
 from geonode.people.models import Profile 
+from geonode.datamanager.enumerations import DATAUPDATE_FREQ
+from geonode.datamanager.utils import getFormhubColumns
 
 
-class DataConnectionForm(forms.ModelForm):
+class DataConnectionCreateForm(forms.ModelForm):
 
-    collection_date_start = forms.DateField(widget=forms.TextInput(attrs={'class':'datepicker'}), input_formats=("%m/%d/%Y",))
-    collection_date_end = forms.DateField(widget=forms.TextInput(attrs={'class':'datepicker'}), input_formats=("%m/%d/%Y",))
+    formhub_password = forms.CharField(widget=forms.PasswordInput(), required=True)
 
-    keywords = taggit.forms.TagField(required=False,
-                                     help_text=_("A space or comma-separated list of keywords"))
     class Meta:
         model = DataConnection
-        exclude = ('uuid', 'owner', 'creation_date', 'lastedit_date')
+        exclude = ('owner', 'creation_date', 'lastedit_date', 'update_freq', 'lat_column','lon_column','layer_name','geocode_column', 'geocode_country')
+
+class DataConnectionEditForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        dataconnection = kwargs.pop('dataconnection')
+        super(DataConnectionEditForm, self).__init__(*args, **kwargs)
+        #get the dataconnection
+        CHOICES = getFormhubColumns(dataconnection)
+
+        self.fields['lat_column'].choices = CHOICES
+        self.fields['lon_column'].choices = CHOICES
+        self.fields['geocode_column'].choices = CHOICES
+        
+
+    lat_column = forms.ChoiceField(choices=[])
+    lon_column = forms.ChoiceField(choices=[])
+    geocode_column = forms.ChoiceField(choices=[], required=False)
+
+    update_freq = forms.ChoiceField(choices=DATAUPDATE_FREQ)
+
+
+    class Meta:
+        model = DataConnection
+        exclude = ('owner', 'creation_date', 'lastedit_date','layer_name', 'formhub_url', 'formhub_username', 'formhub_password',)

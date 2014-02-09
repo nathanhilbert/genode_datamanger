@@ -4,9 +4,15 @@
 
 {% block title %}Create Data Connection{% endblock %}
 
-{% block body_class %}data{% endblock %}
+{% block body_class %}datamanager{% endblock %}
 
 {% block body_outer %}  
+
+{% if dataconnection %}
+    {% include "datamanager/_dataconnection_contentheader.html" %}
+{% endif %}
+
+
 <form class="form-horizontal" method="POST">
 
 
@@ -25,6 +31,9 @@
     {% endif %}
     <br/>
     {% csrf_token %}
+    <div class="form-actions">
+      <input type="submit" class="btn btn-primary" value="{% trans "Save" %}"/>
+    </div>
     <div class="form-controls">
       {{ dataconnection_form|as_bootstrap }}
     </div>

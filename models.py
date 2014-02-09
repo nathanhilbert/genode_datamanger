@@ -34,6 +34,7 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.files.base import ContentFile
 from django.conf import settings
 from django.contrib.staticfiles.templatetags import staticfiles
+from django.core.validators import RegexValidator
 
 from geonode.base.enumerations import ALL_LANGUAGES, \
     HIERARCHY_LEVELS, UPDATE_FREQUENCIES, \
@@ -41,6 +42,8 @@ from geonode.base.enumerations import ALL_LANGUAGES, \
 from geonode.utils import bbox_to_wkt
 from geonode.people.models import Profile, Role
 from geonode.security.models import PermissionLevelMixin
+from geonode.datamanager.utils import createLayerFromCSV
+
 
 from taggit.managers import TaggableManager
 
@@ -49,32 +52,39 @@ logger = logging.getLogger("geonode.datamanger.models")
 
 class DataConnection(models.Model, PermissionLevelMixin):
 
-    VALID_DATE_TYPES = [(x.lower(), _(x)) for x in ['Creation', 'Publication', 'Revision']]
-
-    # internal fields
-    uuid = models.CharField(max_length=36)
     owner = models.ForeignKey(User, blank=True, null=True)
 
 
     # section 1
-    title = models.CharField(_('title'), max_length=255, help_text=_('name by which the cited resource is known'))
-    creation_date = models.DateField(_('date'), default = datetime.now, help_text=_('reference date for the cited resource')) # passing the method itself, not the result
+    alphanumeric = RegexValidator(r'^[\w\-\s]*$', 'Only alphanumeric characters are allowed.')
+    title = models.CharField(_('Data Connection Name'), max_length=255, help_text=_('Title of data connection or survey'), unique=True, validators=[alphanumeric])
+    creation_date = models.DateField(_('date'), default = datetime.now, help_text=_('Time this connection was created')) # passing the method itself, not the result
     lastedit_date = models.DateField(_('date'), default = datetime.now, help_text=_('Last time this was edited')) 
-    collection_date_start = models.DateField(_('date'), default = datetime.now, help_text=_('Date of collection')) 
-    collection_date_end = models.DateField(_('date'), default = datetime.now, help_text=_('Date of collection end')) 
+
+    description_con = models.TextField(_('Description'), blank=True, help_text=_('Brief narrative summary of the content of the resource(s)'))
+
+    formhub_url = models.URLField(_('Formhub URL'), help_text=_('This should be in the format of https://formhub.org/[user name]/forms/[survey name]'))
+    formhub_username = models.CharField(_('Formhub username'), max_length=255, help_text=_('User name of of your formhub account'))
+    formhub_password = models.CharField(_('Formhub Password'), max_length=255, help_text=_('Password of FormHub Account'))
 
 
-    abstract = models.TextField(_('abstract'), blank=True, help_text=_('brief narrative summary of the content of the resource(s)'))
-    purpose = models.TextField(_('purpose'), null=True, blank=True, help_text=_('summary of the intentions with which the resource(s) was developed'))
+    update_freq = models.CharField(_('Update Frequency'), max_length=255, help_text=_('Automatically pull in data from Formhub'))
 
-    maintenance_frequency = models.CharField(_('maintenance frequency'), max_length=255,blank=True, null=True, help_text=_('frequency with which modifications and deletions are made to the data after it is first produced'))
+    lat_column = models.CharField(_('Latitude Column'), max_length=255, help_text=_('Will always end with _latitude'))
+    lon_column = models.CharField(_('Longitude Column'), max_length=255, help_text=_('Will always end with _longitude'))
 
+    geocode_column = models.CharField(_('Geocode Column (Optional)'), blank=True, null=True,max_length=255, help_text=_('If latitude and longitude are not present, can use this field to attempt to geocode'))
+    geocode_country = models.CharField(_('Geocode Country (Optional)'), blank=True, null=True, max_length=255, help_text=_('Please enter the country.  If it is worldwide, leave blank'))
 
-    keywords = TaggableManager(_('keywords'), blank=True, help_text=_('commonly used word(s) or formalised word(s) or phrase(s) used to describe the subject (space or comma-separated'))
-    regions = models.TextField(_('regions'), blank=True, null=True, help_text=_('geographical region'))
-    constraints_other = models.TextField(_('restrictions other'), blank=True, null=True, help_text=_('other restrictions and legal prerequisites for accessing and using the resource or metadata'))
+    layer_name = models.CharField(_('Layer Name'), max_length=255)
 
-
+    def refresh(self):
+        new_layer = createLayerFromCSV(self)
+        if new_layer:
+            self.lastedit_date = datetime.now()
+            self.layer_name = new_layer.name
+            self.save()
+        return
 
 
 
