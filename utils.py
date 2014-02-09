@@ -96,8 +96,37 @@ import shutil
 from django.template.defaultfilters import slugify
 from geonode.layers.utils import file_upload
 
+def fixShpNames(namesarray):
+    newheaders = []
+    finalheaders = []
+    prefix = {}
+    for headername in namesarray:
+        try:
+            writesection = headername.split("/")[-1]
+        except:
+            writesection = headername
+        newname = (writesection[:10]) if len(writesection) > 10 else writesection
+        if newname in prefix.keys():
+            prefix[newname] +=1
+        else :
+            prefix[newname] = 1
+        newheaders.append(newname)
+    for newname in newheaders:
+        if prefix[newname] == 1:
+            finalheaders.append(newname)
+        else:
+            if len(newname) < 8:
+                newname = newname + str(prefix[newname]).zfill(1)
+            else:
+                newname = newname[:8]+ str(prefix[newname]).zfill(1)
+            finalheaders.append(newname)
+    return finalheaders
+
+
 def createLayerFromCSV(dataconnection):
-    headers, data = getFormhubCSV(dataconnection)
+    rawheaders, data = getFormhubCSV(dataconnection)
+    headers = fixShpNames(rawheaders)
+    print headers
     props = {}
     for headstr in headers:
         props[headstr] = 'str'
@@ -107,9 +136,10 @@ def createLayerFromCSV(dataconnection):
 
     with collection(temporaryfile + ".shp", "w", "ESRI Shapefile", schema) as output:
         for row in data:
-            writerow = dict(zip(headers, row))
+            dataset = dict(zip(rawheaders, row))
+            atrributes = dict(zip(headers, row))
             try:
-                point = Point(float(writerow[dataconnection.lon_column]), float(writerow[dataconnection.lat_column]))
+                point = Point(float(dataset[dataconnection.lon_column]), float(dataset[dataconnection.lat_column]))
             except:
                 point = None
             if not point and dataconnection.geocode_column:
@@ -120,10 +150,9 @@ def createLayerFromCSV(dataconnection):
                     point = Point(float(pointset['lon']), float(pointset['lat']))
 
                 #attempt to geocode
-            print point
-            print writerow
+            print atrributes
             output.write({
-                'properties': writerow,
+                'properties': atrributes,
                 'geometry': mapping(point)
             })
     #add proj file to the mix
@@ -132,7 +161,6 @@ def createLayerFromCSV(dataconnection):
 
     #upload file and done
     newlayer = file_upload(temporaryfile + ".shp", user=dataconnection.owner, overwrite=True)
-    print newlayer
 
     try:
         os.remove(temporaryfile + ".shp")
@@ -142,5 +170,5 @@ def createLayerFromCSV(dataconnection):
         os.remove(temporaryfile + ".prj")
     except:
         print "error removing file"
-    return
+    return newlayer
 

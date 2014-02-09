@@ -3,25 +3,30 @@
 
 <article>
   <div class="content">
-    <div class="datatitle">
+    <h3 class="datatitle">
       {{dataconnection.title}}
-    </div>
+    </h3>
     <div class="dataabstract">
       {{ dataconnection.abstract|slice:":255"}}
     </div>
+    <div>
+      Refreshed: {{ dataconnection.lastedit_date|date:"d b Y H:i a" }}
+    </div>
     <div class="dataactions">
-      <a href="#" class="button">
+      <a href="/datamanager/{{ dataconnection.id }}" class="button">
         Details
       </a>
-      <a href="#" class="button">
-        View Data
+      <a href="/datamanager/{{ dataconnection.id }}/edit" class="button">
+        Edit
       </a>
-      <a href="#" class="button button-warn">
+      <a href="/datamanager/{{ dataconnection.id }}/refresh" class="button button-warn">
         Refresh
       </a>
-      <a href="#" class="button button-warn">
+      <a href="/datamanager/{{ dataconnection.id }}/delete" class="button button-warn">
         Remove
       </a>
     </div>
+
   </div> <!-- /.content -->
+  <hr size="2px" style="color:black">
 </article>

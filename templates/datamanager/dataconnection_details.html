@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load bootstrap_tags %}
 
-{% block title %}Title goes here{% endblock %}
+{% block title %}Data Connection Details{% endblock %}
 
 {% block body_class %}datamanager{% endblock %}
 
@@ -12,6 +12,23 @@
 <div class="datacon_content">
   {% include "datamanager/_dataconnection_list_item.html" %}
   {% include "datamanager/_dataconnection_contentheader.html" %}
+</div>
+
+<div class="extracontent">
+    <h3>
+        <a href="{{layerurl}}">Geonode Layer URL</a>
+    </h3>
+
+    <div>
+        Last Time Data was refreshed: {{ dataconnection.lastedit_date|date:"d b Y H:i a" }}
+    </div>
+    <div>
+        Refresh Frequency: {{dataconnection.update_freq}}
+    </div>
+    <div>
+    {{ dataconnection.description }}
+    </div>
+
 </div>
 
 {% endblock %}

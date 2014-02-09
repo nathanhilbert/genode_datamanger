@@ -44,7 +44,9 @@ from geonode.datamanager.forms import DataConnectionCreateForm, DataConnectionEd
 from geonode.datamanager.models import DataConnection
 from geonode.datamanager.utils import testFormhubConnection
 
-from datetime import datetime
+from geonode.datamanager.enumerations import ENUMTIMES
+
+from datetime import datetime, timedelta 
 from time import time
 import json
 import cPickle as pickle
@@ -117,10 +119,7 @@ def dataconnection_edit(request, id, template='datamanager/dataconnection_create
         dataconnection_form = DataConnectionEditForm(instance=dataconnection, dataconnection=dataconnection)
 
     if request.method == "POST" and dataconnection_form.is_valid():
-        print "saving now"
         dataconnection = dataconnection_form.save()
-        print dataconnection.formhub_url
-        print "refreshing now"
         dataconnection.refresh()
         #redirect to layer
         return HttpResponseRedirect(reverse('datamanager'))#, args=(layer.typename,)))
@@ -147,7 +146,42 @@ def dataconnection_refresh(request, id, template='datamanager/dataconnection_cre
 
 @login_required
 def dataconnection_details(request, id, template='datamanager/dataconnection_details.html'):
-    return render_to_response(template, RequestContext(request, {}))
+    dataconnection = DataConnection.objects.get(id=int(id))
+    layerurl = dataconnection.getLayerURL()
+    return render_to_response(template, RequestContext(request, {"dataconnection":dataconnection, "layerurl": layerurl}))
+
+@login_required
+def dataconnection_delete(request, id, template='datamanager/dataconnection_confirm_delete.html'):
+    #double check dataconnection
+    dataconnection = DataConnection.objects.get(id=int(id))
+
+
+    confirm = request.GET.get('confirm', None)
+    cancel = request.GET.get('cancel', None)
+    if confirm == "Confirm":
+        dataconnection.delete()
+        return HttpResponseRedirect(reverse('datamanager'))
+    elif cancel == "Cancel":
+        return HttpResponseRedirect(reverse('dataconnection_details', args=(dataconnection.id,)))
+
+    return render_to_response(template, RequestContext(request, {
+        "dataconnection": dataconnection,
+    }))
+
+from django.utils.timezone import utc
+
+#login_required
+def dataconnection_checkrefresh(request, template=None):
+    dataconnections = DataConnection.objects.all()
+    for dataconnection in dataconnections:
+        checkint = (ENUMTIMES[dataconnection.update_freq]) if dataconnection.update_freq else 0
+        if checkint < 1:
+            continue
+        currenttime = datetime.now()
+        future = dataconnection.lastedit_date + timedelta(seconds=checkint)
+        if future < currenttime:
+            dataconnection.refresh()
+    return HttpResponseRedirect(reverse('datamanager'))
 
 
 

@@ -25,8 +25,15 @@ DATACONNECTION_TYPES = [
 ]
 
 DATAUPDATE_FREQ = (
-    ("0", "Never",),
-    ("84600", 'Daily',),
-    ("604800", 'Weekly',),
-    ("18748800", 'Monthly',),
+    ("Never", "Never",),
+    ("Daily", 'Daily',),
+    ("Weekly", 'Weekly',),
+    ("Monthly", 'Monthly',),
 )
+
+ENUMTIMES = {
+    "Never": 0,
+    "Daily": 86400,
+    "Weekly": 604800,
+    "Monthly": 18748800,
+}
