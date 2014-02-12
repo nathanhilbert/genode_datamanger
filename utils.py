@@ -140,17 +140,20 @@ def createLayerFromCSV(dataconnection):
             atrributes = dict(zip(headers, row))
             try:
                 point = Point(float(dataset[dataconnection.lon_column]), float(dataset[dataconnection.lat_column]))
-            except:
+            except Exception,e: 
+                print str(e)
                 point = None
             if not point and dataconnection.geocode_column:
+                print "trying to geocode"
                 pointset = geocodeSet(dataconnection.geocode_column, dataconnection.geocode_country)
                 if not pointset:
-                    pass
+                    continue
                 else:
                     point = Point(float(pointset['lon']), float(pointset['lat']))
 
                 #attempt to geocode
-            print atrributes
+            if not point:
+                continue
             output.write({
                 'properties': atrributes,
                 'geometry': mapping(point)
